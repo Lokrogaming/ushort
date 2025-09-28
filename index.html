@@ -91,6 +91,16 @@ toggleBtn.addEventListener("click",()=>{
   toggleBtn.textContent=newTheme==="dark"?"☀️":"🌙";
 });
 
+document.getElementById("submitForm").addEventListener("submit", (e) => {
+  const agree = document.getElementById("agree");
+  const out=document.getElementById("checkResult")
+  if (!agree.checked) {
+    e.preventDefault(); // verhindert das Abschicken
+    out.innerHTML=`<p class="danger">Bitte bestätige das Senden der Daten!</p>`;
+  }
+});
+
+
 loadData();
 </script>
 </body>
