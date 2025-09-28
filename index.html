@@ -67,12 +67,18 @@ document.getElementById("checkBtn").addEventListener("click",async()=>{
   const valid=await validateInput(type,content);
   if(!valid.ok){ out.innerHTML=`<p class="danger">${valid.msg}</p>`; return; }
 
-  let id,code,exists=true,tries=0;
-  while(exists && tries<20){
-    id=randomId(); code=generateCode(type,id);
-    exists=Boolean(shortenData[code]); tries++;
-  }
-  if(exists){ out.innerHTML="<p class='danger'>Konnte keinen freien Code finden.</p>"; return; }
+  let id, code, exists = true, tries = 0;
+while (exists && tries < 20) {
+  id = randomId();
+  code = generateCode(type, id);
+  exists = Boolean(shortenData[code]) || configData.reservedCodes.includes(code);
+  tries++;
+}
+if (exists) {
+  out.innerHTML = "<p class='danger'>Konnte keinen freien Code finden.</p>";
+  return;
+}
+
 
   const json={type,code,content,userEmail};
   document.getElementById("jsonData").value=JSON.stringify(json,null,2);
