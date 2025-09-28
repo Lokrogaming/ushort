@@ -2,8 +2,9 @@
   "formats": {
     "letters": "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
     "codeFormat": "${type}|${id}",
-    "idLength": 6
+    "idLength": 12
   },
   "forbiddenWords": ["badword","spam"],
-  "forbiddenTypes": []
+  "forbiddenTypes": [],
+  "reservedCodes": ["arduino", "ggde", "de", "provid", "lokro", "eministarvr", "eministar", "yukicraft", "yuki", "stardev"]
 }
