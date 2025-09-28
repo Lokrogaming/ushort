@@ -75,7 +75,11 @@ async function validateInput(type,content){
   return {ok:true};
 }
 
-// Credits aus LocalStorage verwalten
+function updateCreditDisplay(data) {
+  document.getElementById("creditDisplay").textContent = 
+    `Credits: ${data.available}/${configData.codesPerUser}`;
+}
+
 function getUserCredits() {
   const data = JSON.parse(localStorage.getItem("userCredits")) || {
     available: configData.codesPerUser,
@@ -94,6 +98,8 @@ function getUserCredits() {
     data.lastRefill = now;
     localStorage.setItem("userCredits", JSON.stringify(data));
   }
+
+  updateCreditDisplay(data); // Anzeige aktualisieren
   return data;
 }
 
@@ -102,10 +108,14 @@ function useCredit() {
   if (data.available > 0) {
     data.available--;
     localStorage.setItem("userCredits", JSON.stringify(data));
+    updateCreditDisplay(data); // Anzeige aktualisieren
     return true;
   }
   return false;
 }
+
+
+
 
 // Prüfen & JSON erzeugen
 document.getElementById("checkBtn").addEventListener("click", async () => {
