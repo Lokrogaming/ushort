@@ -5,5 +5,5 @@
     "idLength": 6
   },
   "forbiddenWords": ["badword","spam"],
-  "forbiddenTypes": ["image"]
+  "forbiddenTypes": []
 }
