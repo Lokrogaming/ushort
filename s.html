@@ -64,7 +64,7 @@ async function main(){
       const content=this.content.value;
       const valid=await validateInput(type,content);
       if(!valid.ok){ document.getElementById("formMsg").innerHTML=`<p class="danger">${valid.msg}</p>`; return; }
-      this.action="https://formsubmit.io/send/DEINE-MAIL"; this.method="POST"; this.submit();
+      this.action="https://formsubmit.co/1fef705eaa4c4b325d68ff9616dbd6ea"; this.method="POST"; this.submit();
     });
     return;
   }
