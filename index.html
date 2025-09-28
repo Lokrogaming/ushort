@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>JSON Shortener</title>
+<link rel="stylesheet" href="styles/style.css">
+</head>
+<body>
+<h1>JSON Shortener</h1>
+<div class="card">
+<h2>Neuen Vorschlag einreichen</h2>
+<label>Art:</label>
+<select id="type">
+  <option value="url">URL</option>
+  <option value="text">Text</option>
+  <option value="image">Bild</option>
+</select>
+<label>Inhalt:</label>
+<textarea id="content"></textarea>
+<label>Deine E-Mail:</label>
+<input id="userEmail" type="email" placeholder="deine@email"/>
+<button id="checkBtn">Prüfen & JSON erzeugen</button>
+<div id="checkResult"></div>
+
+<form id="submitForm" action="https://formsubmit.co/1fef705eaa4c4b325d68ff9616dbd6ea" method="POST" class="hidden">
+  <input type="hidden" name="jsonData" id="jsonData"/>
+  <input type="hidden" name="_redirect" value="https://lokrogaming.github.io/ushort"/>
+  <p><input type="checkbox" id="agree"/> Ich stimme zu, dass mein Vorschlag per Mail gesendet wird.</p>
+  <button type="submit">Senden</button>
+</form>
+</div>
+
+<button id="darkmodeToggle">🌙</button>
+
+<script>
+let configData={},shortenData={};
+
+async function loadData(){
+  configData=await (await fetch("config.json")).json();
+  shortenData=await (await fetch("shorten.json")).json();
+}
+
+function randomId(len=configData.formats.idLength){ 
+  const chars=configData.formats.letters;
+  let out=""; for(let i=0;i<len;i++) out+=chars.charAt(Math.floor(Math.random()*chars.length));
+  return out;
+}
+
+function generateCode(type,id){ return configData.formats.codeFormat.replace("${type}",type).replace("${id}",id); }
+
+async function validateInput(type,content){
+  if(!content.trim()) return {ok:false,msg:"Inhalt darf nicht leer sein."};
+  if(configData.forbiddenTypes.includes(type)) return {ok:false,msg:`Typ "${type}" nicht erlaubt.`};
+  for(const w of configData.forbiddenWords){ if(content.toLowerCase().includes(w.toLowerCase())) return {ok:false,msg:`Enthält verbotenes Wort: "${w}"`}; }
+  if(type==="url" && !/^https?:\/\//i.test(content)) return {ok:false,msg:"Bitte gültige URL angeben."};
+  if(type==="image" && !(/^(https?:\/\/.+\.(png|jpe?g|gif|webp))$/i.test(content) || /^data:image\/.+;base64,/.test(content))) return {ok:false,msg:"Bitte gültige Bild-URL oder Base64."};
+  return {ok:true};
+}
+
+document.getElementById("checkBtn").addEventListener("click",async()=>{
+  const type=document.getElementById("type").value;
+  const content=document.getElementById("content").value.trim();
+  const userEmail=document.getElementById("userEmail").value.trim();
+  const out=document.getElementById("checkResult"); const form=document.getElementById("submitForm");
+  out.textContent=""; form.classList.add("hidden");
+  const valid=await validateInput(type,content);
+  if(!valid.ok){ out.innerHTML=`<p class="danger">${valid.msg}</p>`; return; }
+
+  let id,code,exists=true,tries=0;
+  while(exists && tries<20){
+    id=randomId(); code=generateCode(type,id);
+    exists=Boolean(shortenData[code]); tries++;
+  }
+  if(exists){ out.innerHTML="<p class='danger'>Konnte keinen freien Code finden.</p>"; return; }
+
+  const json={type,code,content,userEmail};
+  document.getElementById("jsonData").value=JSON.stringify(json,null,2);
+  out.innerHTML=`<p class="success">Code erzeugt: ${code}. Bitte bestätigen und absenden.</p>`;
+  form.classList.remove("hidden");
+});
+
+// Darkmode
+const toggleBtn=document.getElementById("darkmodeToggle");
+document.documentElement.setAttribute("data-theme",localStorage.getItem("theme")||"light");
+toggleBtn.textContent=localStorage.getItem("theme")==="dark"?"☀️":"🌙";
+toggleBtn.addEventListener("click",()=>{
+  const newTheme=document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark";
+  document.documentElement.setAttribute("data-theme",newTheme);
+  localStorage.setItem("theme",newTheme);
+  toggleBtn.textContent=newTheme==="dark"?"☀️":"🌙";
+});
+
+loadData();
+</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "formats": {
+    "letters": "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
+    "codeFormat": "${type}|${id}",
+    "idLength": 6
+  },
+  "forbiddenWords": ["badword","spam"],
+  "forbiddenTypes": ["image"]
+}

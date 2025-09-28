@@ -1,0 +1,10 @@
+{
+  "url|AbC123": {
+    "target": "https://example.com/start",
+    "verified": true
+  },
+  "text|XYZ": {
+    "target": "Hallo Welt",
+    "verified": false
+  }
+}

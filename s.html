@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Shortlink Weiterleitung</title>
+<link rel="stylesheet" href="styles/style.css">
+</head>
+<body>
+<h1>Shortlink Weiterleitung</h1>
+<div id="output"><div class="loader"></div></div>
+<button id="darkmodeToggle">🌙</button>
+
+<script>
+const toggleBtn=document.getElementById("darkmodeToggle");
+document.documentElement.setAttribute("data-theme",localStorage.getItem("theme")||"light");
+toggleBtn.textContent=localStorage.getItem("theme")==="dark"?"☀️":"🌙";
+toggleBtn.addEventListener("click",()=>{
+  const newTheme=document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark";
+  document.documentElement.setAttribute("data-theme",newTheme);
+  localStorage.setItem("theme",newTheme);
+  toggleBtn.textContent=newTheme==="dark"?"☀️":"🌙";
+});
+
+async function validateInput(type,content){
+  const cfg=await (await fetch("config.json")).json();
+  if(!content.trim()) return {ok:false,msg:"Inhalt darf nicht leer sein."};
+  if(cfg.forbiddenTypes.includes(type)) return {ok:false,msg:`Typ "${type}" nicht erlaubt.`};
+  for(const w of cfg.forbiddenWords){ if(content.toLowerCase().includes(w.toLowerCase())) return {ok:false,msg:`Enthält verbotenes Wort: "${w}"`}; }
+  if(type==="url" && !/^https?:\/\//i.test(content)) return {ok:false,msg:"Bitte gültige URL."};
+  if(type==="image" && !(/^(https?:\/\/.+\.(png|jpe?g|gif|webp))$/i.test(content) || /^data:image\/.+;base64,/.test(content))) return {ok:false,msg:"Bitte gültige Bild-URL oder Base64."};
+  return {ok:true};
+}
+
+async function main(){
+  const params=new URLSearchParams(window.location.search);
+  const id=params.get("id"); const type=params.get("type"); const redirect=params.get("redirect")!=="false";
+  const out=document.getElementById("output");
+  if(!id){ out.innerHTML="<p class='danger'>Kein id angegeben.</p>"; return; }
+
+  const data=await (await fetch("shorten.json")).json();
+  let foundKey=null;
+  for(const key in data){
+    const [kType,kId]=key.split("|");
+    if(type && kType!==type) continue;
+    if(kId===id){ foundKey=key; break; }
+  }
+
+  if(!foundKey){
+    out.innerHTML=`<p class='danger'>Kein Eintrag für ID "<b>${id}</b>" gefunden.</p>
+      <p>Wollen Sie diese ID reservieren?</p>
+      <form id="reserveForm">
+      <input type="hidden" name="id" value="${id}">
+      <label>Typ: <select name="type" required><option value="url">URL</option><option value="text">Text</option><option value="image">Bild</option></select></label><br><br>
+      <label>Inhalt:<br><textarea name="content" style="width:100%;height:80px;" required></textarea></label><br><br>
+      <label>E-Mail:<br><input type="email" name="userEmail" required></label><br><br>
+      <button type="submit">ID "${id}" jetzt anlegen</button>
+      </form>
+      <div id="formMsg"></div>`;
+
+    document.getElementById("reserveForm").addEventListener("submit",async function(e){
+      e.preventDefault();
+      const type=this.type.value;
+      const content=this.content.value;
+      const valid=await validateInput(type,content);
+      if(!valid.ok){ document.getElementById("formMsg").innerHTML=`<p class="danger">${valid.msg}</p>`; return; }
+      this.action="https://formsubmit.io/send/DEINE-MAIL"; this.method="POST"; this.submit();
+    });
+    return;
+  }
+
+  const entry=data[foundKey]; const target=entry.target; const verified=entry.verified;
+  if(redirect && foundKey.startsWith("url|")) window.location.replace(target);
+  else out.innerHTML=`<div class='card fade'><p><b>${foundKey}</b></p><pre>${target}</pre><p>Status: ${verified? "✅ Verifiziert":"❌ Nicht verifiziert"}</p></div>`;
+}
+
+main();
+</script>
+</body>
+</html>
