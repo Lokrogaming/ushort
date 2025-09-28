@@ -29,7 +29,7 @@ body {
 /* Verified */
 body.verified {
   font-family: system-ui, sans-serif;
-  background: var(--bg);
+  background: linear-gradient(45deg, #000000, #00FF44);
   color: var(--text);
   margin: 0;
   padding: 20px;
