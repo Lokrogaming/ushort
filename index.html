@@ -34,80 +34,146 @@
 <button id="darkmodeToggle">🌙</button>
 
 <script>
-let configData={},shortenData={};
+let configData = {}, shortenData = {};
 
+// Daten laden
 async function loadData(){
-  configData=await (await fetch("config.json")).json();
-  shortenData=await (await fetch("shorten.json")).json();
+  configData = await (await fetch("config.json")).json();
+  shortenData = await (await fetch("shorten.json")).json();
+  getUserCredits(); // Credits prüfen/refillen
 }
 
-function randomId(len=configData.formats.idLength){ 
-  const chars=configData.formats.letters;
-  let out=""; for(let i=0;i<len;i++) out+=chars.charAt(Math.floor(Math.random()*chars.length));
+// Random-ID
+function randomId(len = configData.formats.idLength){ 
+  const chars = configData.formats.letters;
+  let out = "";
+  for(let i = 0; i < len; i++) out += chars.charAt(Math.floor(Math.random()*chars.length));
   return out;
 }
 
-function generateCode(type,id){ return configData.formats.codeFormat.replace("${type}",type).replace("${id}",id); }
+// Code erstellen
+function generateCode(type,id){ 
+  return configData.formats.codeFormat
+    .replace("${type}", type)
+    .replace("${id}", id); 
+}
 
+// Eingaben prüfen
 async function validateInput(type,content){
   if(!content.trim()) return {ok:false,msg:"Inhalt darf nicht leer sein."};
   if(configData.forbiddenTypes.includes(type)) return {ok:false,msg:`Typ "${type}" nicht erlaubt.`};
-  for(const w of configData.forbiddenWords){ if(content.toLowerCase().includes(w.toLowerCase())) return {ok:false,msg:`Enthält verbotenes Wort: "${w}"`}; }
-  if(type==="url" && !/^https?:\/\//i.test(content)) return {ok:false,msg:"Bitte gültige URL angeben."};
-  if(type==="image" && !(/^(https?:\/\/.+\.(png|jpe?g|gif|webp))$/i.test(content) || /^data:image\/.+;base64,/.test(content))) return {ok:false,msg:"Bitte gültige Bild-URL oder Base64."};
+  for(const w of configData.forbiddenWords){ 
+    if(content.toLowerCase().includes(w.toLowerCase())) 
+      return {ok:false,msg:`Enthält verbotenes Wort: "${w}"`}; 
+  }
+  if(type==="url" && !/^https?:\/\//i.test(content)) 
+    return {ok:false,msg:"Bitte gültige URL angeben."};
+  if(type==="image" && !(/^(https?:\/\/.+\.(png|jpe?g|gif|webp))$/i.test(content) || /^data:image\/.+;base64,/.test(content))) 
+    return {ok:false,msg:"Bitte gültige Bild-URL oder Base64."};
   return {ok:true};
 }
 
-document.getElementById("checkBtn").addEventListener("click",async()=>{
-  const type=document.getElementById("type").value;
-  const content=document.getElementById("content").value.trim();
-  const userEmail=document.getElementById("userEmail").value.trim();
-  const out=document.getElementById("checkResult"); const form=document.getElementById("submitForm");
-  out.textContent=""; form.classList.add("hidden");
-  const valid=await validateInput(type,content);
-  if(!valid.ok){ out.innerHTML=`<p class="danger">${valid.msg}</p>`; return; }
+// Credits aus LocalStorage verwalten
+function getUserCredits() {
+  const data = JSON.parse(localStorage.getItem("userCredits")) || {
+    available: configData.codesPerUser,
+    lastRefill: Date.now()
+  };
+
+  const now = Date.now();
+  const oneDay = 24 * 60 * 60 * 1000;
+  const daysPassed = Math.floor((now - data.lastRefill) / oneDay);
+
+  if (daysPassed > 0) {
+    data.available = Math.min(
+      configData.codesPerUser,
+      data.available + daysPassed * configData.codesPerDay
+    );
+    data.lastRefill = now;
+    localStorage.setItem("userCredits", JSON.stringify(data));
+  }
+  return data;
+}
+
+function useCredit() {
+  const data = getUserCredits();
+  if (data.available > 0) {
+    data.available--;
+    localStorage.setItem("userCredits", JSON.stringify(data));
+    return true;
+  }
+  return false;
+}
+
+// Prüfen & JSON erzeugen
+document.getElementById("checkBtn").addEventListener("click", async () => {
+  const type = document.getElementById("type").value;
+  const content = document.getElementById("content").value.trim();
+  const userEmail = document.getElementById("userEmail").value.trim();
+  const out = document.getElementById("checkResult"); 
+  const form = document.getElementById("submitForm");
+
+  out.textContent = "";
+  form.classList.add("hidden");
+
+  const valid = await validateInput(type, content);
+  if(!valid.ok){ 
+    out.innerHTML = `<p class="danger">${valid.msg}</p>`; 
+    return; 
+  }
+
+  const credits = getUserCredits();
+  if (credits.available <= 0) {
+    out.innerHTML = "<p class='danger'>Du hast dein tägliches Limit erreicht. Bitte warte, bis Codes nachgefüllt werden.</p>";
+    return;
+  }
 
   let id, code, exists = true, tries = 0;
-while (exists && tries < 20) {
-  id = randomId();
-  code = generateCode(type, id);
-  exists = Boolean(shortenData[code]) || configData.reservedCodes.includes(code);
-  tries++;
-}
-if (exists) {
-  out.innerHTML = "<p class='danger'>Konnte keinen freien Code finden.</p>";
-  return;
-}
+  while(exists && tries < 20){
+    id = randomId();
+    code = generateCode(type,id);
+    exists = Boolean(shortenData[code]) || configData.reservedCodes.includes(code);
+    tries++;
+  }
+  if(exists){ 
+    out.innerHTML = "<p class='danger'>Konnte keinen freien Code finden.</p>"; 
+    return; 
+  }
 
+  if (!useCredit()) {
+    out.innerHTML = "<p class='danger'>Keine Credits verfügbar.</p>";
+    return;
+  }
 
-  const json={type,code,content,userEmail};
-  document.getElementById("jsonData").value=JSON.stringify(json,null,2);
-  out.innerHTML=`<p class="success">Code erzeugt: ${code}. Bitte bestätigen und absenden.</p>`;
+  const json = {type, code, content, userEmail};
+  document.getElementById("jsonData").value = JSON.stringify(json,null,2);
+  out.innerHTML = `<p class="success">Code erzeugt: ${code}. Bitte bestätigen und absenden.</p>`;
   form.classList.remove("hidden");
 });
 
-// Darkmode
-const toggleBtn=document.getElementById("darkmodeToggle");
-document.documentElement.setAttribute("data-theme",localStorage.getItem("theme")||"light");
-toggleBtn.textContent=localStorage.getItem("theme")==="dark"?"☀️":"🌙";
-toggleBtn.addEventListener("click",()=>{
-  const newTheme=document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark";
-  document.documentElement.setAttribute("data-theme",newTheme);
-  localStorage.setItem("theme",newTheme);
-  toggleBtn.textContent=newTheme==="dark"?"☀️":"🌙";
-});
-
+// Submit prüfen ob Checkbox gesetzt
 document.getElementById("submitForm").addEventListener("submit", (e) => {
   const agree = document.getElementById("agree");
-  const out=document.getElementById("checkResult")
+  const out = document.getElementById("checkResult");
   if (!agree.checked) {
-    e.preventDefault(); // verhindert das Abschicken
-    out.innerHTML=`<p class="danger">Bitte bestätige das Senden der Daten!</p>`;
+    e.preventDefault();
+    out.innerHTML = `<p class="danger">Bitte bestätige das Senden der Daten!</p>`;
   }
 });
 
+// Darkmode
+const toggleBtn = document.getElementById("darkmodeToggle");
+document.documentElement.setAttribute("data-theme", localStorage.getItem("theme")||"light");
+toggleBtn.textContent = localStorage.getItem("theme")==="dark" ? "☀️" : "🌙";
+toggleBtn.addEventListener("click",()=>{
+  const newTheme = document.documentElement.getAttribute("data-theme")==="dark" ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", newTheme);
+  localStorage.setItem("theme", newTheme);
+  toggleBtn.textContent = newTheme==="dark" ? "☀️" : "🌙";
+});
 
 loadData();
 </script>
+
 </body>
 </html>
