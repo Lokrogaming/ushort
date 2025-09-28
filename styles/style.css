@@ -20,7 +20,7 @@
 
 body {
   font-family: system-ui, sans-serif;
-  background: linear-gradient(45deg, black, green);
+  background: var(--bg);
   color: var(--text);
   margin: 0;
   padding: 20px;
