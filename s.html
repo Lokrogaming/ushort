@@ -70,8 +70,8 @@ async function main(){
   }
 
   const entry=data[foundKey]; const target=entry.target; const verified=entry.verified;
-  if(redirect && foundKey.startsWith("url|")) window.location.replace(target);
-  else document.body.className="verified"; out.innerHTML=`<div class='card fade'><p><b>${foundKey}</b></p><pre>${target}</pre><p>Status: ${verified? "✅ Verifiziert":"❌ Nicht verifiziert"}</p></div>`;
+  if(redirect && foundKey.startsWith("url|")) { window.location.replace(target);
+                                              } else { document.body.className.add ="verified"; out.innerHTML=`<div class='card fade'><p><b>${foundKey}</b></p><pre>${target}</pre><p>Status: ${verified? "✅ Verifiziert":"❌ Nicht verifiziert"}</p></div>`;}
 }
 
 main();
