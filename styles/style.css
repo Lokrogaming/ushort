@@ -78,6 +78,18 @@ textarea { resize: vertical; }
 .danger { color: var(--danger); font-weight: bold; }
 .info { color: var(--primary); }
 .success { color: var(--success); }
+.credit-box {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  background: var(--card-bg, #eee);
+  color: var(--text-color, #000);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  z-index: 1000;
+}
 
 /* Loader */
 .loader {
