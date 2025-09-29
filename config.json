@@ -7,6 +7,6 @@
   "forbiddenWords": ["badword","spam"],
   "forbiddenTypes": [],
   "reservedCodes": ["arduino", "ggde", "de", "provid", "lokro", "eministarvr", "eministar", "yukicraft", "yuki", "stardev"],
-  "codesPerUser": 3,
+  "codesPerUser": 999,
   "codesPerDay": 1
 }
