@@ -81,7 +81,7 @@ function updateCreditDisplay(data) {
 }
 
 function getUserCredits() {
-  const data = JSON.parse(localStorage.getItem("userCredits")) || {
+  const data = JSON.parse(localStorage.getItem("credits")) || {
     available: configData.codesPerUser,
     lastRefill: Date.now()
   };
@@ -96,7 +96,7 @@ function getUserCredits() {
       data.available + daysPassed * configData.codesPerDay
     );
     data.lastRefill = now;
-    localStorage.setItem("userCredits", JSON.stringify(data));
+    localStorage.setItem("credits", JSON.stringify(data));
   }
 
   updateCreditDisplay(data); // Anzeige aktualisieren
@@ -107,7 +107,7 @@ function useCredit() {
   const data = getUserCredits();
   if (data.available > 0) {
     data.available--;
-    localStorage.setItem("userCredits", JSON.stringify(data));
+    localStorage.setItem("credits", JSON.stringify(data));
     updateCreditDisplay(data); // Anzeige aktualisieren
     return true;
   }
