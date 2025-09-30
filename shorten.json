@@ -6,5 +6,9 @@
   "text|XYZ": {
     "target": "Hallo Welt",
     "verified": false
+  },
+  "url|arduino": {
+    "target": "https://www.makerscene-oberberg.de",
+    "verified": false
   }
 }
